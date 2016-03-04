@@ -1,5 +1,5 @@
 ################################################################################
-# IMPORTS #####################################################################
+# IMPORTS ######################################################################
 ################################################################################
 
 import utils
@@ -55,7 +55,7 @@ def pandas_sample(file_name):
     #print(data.iloc[[1,2,4],[0,2]])            # Print Data Rows 1, 2, 4 Column 0 & 2
     #print(data.iloc[1:20, [0, 3, -2, 4]])      # Print Data Sliced Rows, Specified Columns
 
-def numpy_from_json(file_name, feature_list=[], train_fraction=0):
+def numpy_from_json(file_name, feature_list=[], train_fraction=0.0):
     """
     Create Numpy Array From JSON File
 
@@ -101,7 +101,7 @@ def numpy_from_json(file_name, feature_list=[], train_fraction=0):
     # Create Numpy Array From Panda Frame
     # Select features based on parameter feature_list
     # If empty select all features
-    if len(feature_list) == 0:
+    if len(feature_list) == 0.0:
         numpy_data = np.array(data.values)
     else:
         numpy_data = np.array(data.iloc[:, feature_list].values)
@@ -256,10 +256,7 @@ def linear_regress_Split_with_Plot(X_tr, Y_tr, X_te, Y_te, title):
     plt.ylabel('Target - Revenue')
     plt.show()
 
-    #######################################################################################
-    # Print Error Rates ###################################################################
-    #######################################################################################
-
+    ## Print Error Rates
     # The mean square error
     print(title)
     print("Training error: ", format(np.mean((regr.predict(X_tr) - Y_tr) ** 2),'f'))
@@ -267,12 +264,11 @@ def linear_regress_Split_with_Plot(X_tr, Y_tr, X_te, Y_te, title):
 
     print("Model Score: " + str(regr.score(X_tr, Y_tr)))
 
-
 ################################################################################
-# Experiments ##################################################################
+# Regression Experiments #######################################################
 ################################################################################
 
-def experiment_1():
+def single_class_1():
     """
     Simple Experiment 1
 
@@ -306,7 +302,7 @@ def experiment_1():
     # Message
     print("\n----------- End 1 ----------------------\n")
 
-def experiment_2():
+def single_class_2():
     """
     Simple Experiment 2
 
@@ -336,7 +332,7 @@ def experiment_2():
     # Message
     print("\n----------- End 2 ----------------------\n")
 
-def experiment_3():
+def single_class_3():
     """
     Simple Experiment 3
 
@@ -364,19 +360,91 @@ def experiment_3():
     # Message
     print("\n----------- End 3 ----------------------\n")
 
+def single_class_4():
+    """
+    Simple Experiment 4
+
+    Test Linear Regression With Train/Test Split
+
+    Single Feature X
+
+    """
+
+    # Message
+    print("\n----------- Experiment 4 ---------------\n")
+
+    # Create Features -> X & Target Values -> Y
+    X_tr, X_te, Y_tr, Y_te = numpy_from_json("/data/datafinal_60-16.json", [3,4], 0.75)
+
+    # Shape
+    #print(X.shape, Y.shape)
+
+    # Call Linear Regress With Train/Split
+    # Log Base 10 Data
+    linear_regress_Split_with_Plot(np.round(np.log10(X_tr), 0), np.round(np.log10(Y_tr),0)
+                                   , np.round(np.log10(X_te), 0), np.round(np.log10(Y_te),0)
+                                   ,"Error Rates On Log Base 10 Data")
+
+
+    # Message
+    print("\n----------- End 4 ----------------------\n")
+
+################################################################################
+# Classification Experiments ###################################################
+################################################################################
+
+# None Currently
+
+################################################################################
+# Controllers ##################################################################
+################################################################################
+
+def single_class_regression():
+    """
+    Single Class Regression
+
+    Simple Experiments Using A Single Feature for X.
+    Want to establish baseline for models and test
+    performance on different data transformations
+        ex. raw, log10, round(log10, 0), round(log10, 1)
+
+    """
+
+    # Call Experiments From Here
+
+    # Plot Examples
+    #single_class_1()
+
+    # Linear Regression No Split
+    #single_class_2()
+
+    # Linear Regression With Split
+    #single_class_3()
+
+    # Linear Regression With Split - Data Rounded To nearest Int
+    single_class_4()
+
+def simple_regression():
+    """
+    Simple Regression Models
+
+    Expand Regression Models to include more features.
+
+    """
+    # To do
+
+
+################################################################################
+# Main #########################################################################
+################################################################################
 
 if __name__ == '__main__':
 
     # In Main Code
-    # Call Experiments From Here
+    # Call Controllers From Here
 
-    # Plot Examples
-    #experiment_1()
+    single_class_regression()
 
-    # Linear Regression No Split
-    #experiment_2()
 
-    # Linear Regression With Split
-    #experiment_3()
 
-    print()
+
