@@ -6,6 +6,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sklearn.linear_model as lm
 import mltools as ml
+import utils
+import json
+import numpy as np
+import matplotlib.pyplot as plt
+import sklearn.linear_model as lm
+import os
+import pandas as pd
+import mltools as ml
 
 ################################################################################
 # General Utilities ############################################################
@@ -74,6 +82,57 @@ def split_numpy(data, train_fraction=0):
 
     # If no test/train split return data
     return X,Y
+
+def get_feature_lists():
+     """
+     Parses json file and returns all of the possible features as lists
+
+     :return:
+     A list of features with indices:
+     0: budget list
+     1: inflated budget list
+     2: keyword list
+     3: overview list
+     4: genre list
+     5: revenue list
+     6: inflated revenue list
+     """
+
+     with open(os.getcwd() + "/data/datafinal_60-16.json") as data_file:
+        data = json.load(data_file)
+
+     revenue_list = []
+     keyword_list = []
+     overview_list = []
+     genre_list = []
+     infrev_list = []
+     infbud_list = []
+     budget_list = []
+
+     for movie in data:
+         if len(movie["keywords"]["keywords"]) > 0 and int(movie["inf_revenue"]) > 1000000 and int(movie["inf_budget"]) > 1000000:
+             keywords = ""
+             genres = ""
+
+             # builds up this movie's keyword string
+             for kw in movie["keywords"]["keywords"]:
+                keywords += kw["name"] + " "
+
+             # builds up this movie's genre string
+             for genre in movie["genres"]:
+                genres += genre["name"] + " "
+
+             # append the various lists with this movie's info
+             budget_list.append(str(movie["budget"]))
+             infbud_list.append(str(movie["inf_budget"]))
+             keyword_list.append(keywords)
+             overview_list.append(movie["overview"])
+             genre_list.append(genres)
+             revenue_list.append(str(movie["revenue"]))
+             infrev_list.append(str(movie["inf_revenue"]))
+
+
+     return [budget_list, infbud_list, keyword_list, overview_list, genre_list, revenue_list, infrev_list]
 
 ################################################################################
 # Text Utilities ###############################################################
@@ -179,3 +238,142 @@ def remove_stopwords(tokens):
     tokens = [word for word in tokens if word not in stopwords]
     #print(tokens)
     return tokens
+
+def get_word_set(file_name):
+    """
+    - Open JSON file and get unique set of words
+
+    Parameters
+    ----------
+    file_name: String
+
+    Returns
+    -------
+    X: Features
+    Y: Target Values
+
+    Examples
+    --------
+    >>> split_numpy(data, train_fraction=0)
+    tuple(X, Y)
+
+    """
+
+def extract_text_features():
+    """
+    - Open JSON file and get unique set of words
+
+    Parameters
+    ----------
+    file_name: String
+
+    Returns
+    -------
+    X: Features
+    Y: Target Values
+
+    Examples
+    --------
+    >>> split_numpy(data, train_fraction=0)
+    tuple(X, Y)
+
+    """
+
+def text_features_grouped(file_name):
+    """
+    - Open JSON file and get unique set of words
+
+    Parameters
+    ----------
+    file_name: String
+
+    Returns
+    -------
+    None
+
+    Examples
+    --------
+    >>> text_features_grouped(file_name)
+    tuple(X, Y)
+
+    """
+    print("--------Grouped Features---------\n")
+
+    from sklearn.feature_extraction.text import CountVectorizer
+
+
+
+    with open(os.getcwd() + "/data/datafinal_60-16.json") as data_file:
+        data = json.load(data_file)
+
+
+    # KeyWord Features
+    keyWords = []
+    # Budget Feature
+    budgets = []
+    # Revenue Target Value
+    revenues = []
+
+    for movie in data:
+        # Filter Out Data
+        if len(movie["keywords"]["keywords"]) > 0 and int(movie["inf_revenue"]) > 1000000 and int(movie["inf_budget"]) > 1000000:
+
+            # Append To KeyWord Features
+            stringKeywords = ""
+            for kw in movie["keywords"]["keywords"]:
+                stringKeywords = stringKeywords + " " +  kw["name"]
+            keyWords.append(stringKeywords)
+            # Append to Budget
+            budgets.append(float(movie["inf_budget"]))
+            # Append To Target Value
+            revenues.append(float(movie["inf_revenue"]))
+
+
+    # print(len(keyWords))
+    # print(len(budgets))
+    # print(len(revenues))
+
+
+    count_vectorizer = CountVectorizer()
+    counts = count_vectorizer.fit_transform(keyWords)
+
+    #print(counts.shape)
+    #print(type(counts))
+
+
+    bd = np.array(budgets)
+    rev = np.array(revenues)
+
+    rev = rev[:,np.newaxis]
+
+    #print(kw.shape)
+    #print(bd.shape)
+    #print(type(rev[0][0]))
+
+    ca = counts.toarray()
+
+
+
+    #print(counts[3].shape)
+
+    # # We create the model.
+    regr = lm.LinearRegression()
+
+    # We train the model on our training dataset.
+    regr.fit(ca, rev)
+
+    print("REV SHAPE: ", rev.shape)
+    print("Count Array Shape: ", ca.shape)
+
+
+    #print("Train MSE   : ", format(np.mean((regr.predict(rev) - rev) ** 2),'f'))
+
+    #yhat = regr.predict(rev)
+
+    #print(type(yhat))
+
+    #print("Test Score  : ", str(regr.score(counts, rev)))
+
+
+if __name__ == '__main__':
+    print()
