@@ -126,6 +126,67 @@ def data_config():
     #pandas_sample("/data/datafinal_60-16.json")
     utils.text_features_grouped("/data/datafinal_60-16.json")
 
+def build_from_numeric_text(numeric_index_list, text_index_list, train_split, take_log):
+    """
+    Build Data Set From multiple Numeric & Text Features
+
+    Numeric Index: Index of Numeric Feature
+    Text Index: Index of Text Feature
+
+    """
+
+    # Get List of all features
+    features_list = utils.get_feature_lists()
+    target_list = features_list[5]
+
+    num_p = 0;
+    text_p = 0;
+
+    if len(text_index_list) != 0:
+        # Process Single Text Feature
+        X_tr, Y_tr, X_te, Y_te = utils.configure_text_feature(features_list[text_index_list[0]], target_list, train_split)
+        text_p += 1
+        #print("SINGLE TEXT INDEX")
+    elif len(numeric_index_list) != 0:
+        # Process Single Numeric Feature
+        X_tr, Y_tr, X_te, Y_te = utils.configure_numeric_feature(features_list[numeric_index_list[0]], target_list, train_split, take_log)
+        num_p += 1
+        #print("SINGLE NUMERIC FEATURE")
+
+    else:
+        # Both Lists are empty Return No Features selected.
+        return
+
+    # Combine Features
+    # Iterate through Text features
+    for tf in text_index_list[text_p:]:
+        #print("TEXT FEATURE: ", tf)
+        # Get New Feature Splits
+        t_X_tr, t_Y_tr, t_X_te, t_Y_te = utils.configure_text_feature(features_list[tf], target_list, train_split)
+        # Combine Feature Splits With Existing
+        X_tr, Y_tr, X_te, Y_te = utils.combine_features(X_tr, Y_tr, X_te, Y_te,  t_X_tr, t_Y_tr, t_X_te, t_Y_te )
+
+
+    # Iterate through numeric features
+    for nf in numeric_index_list[num_p:]:
+        #print("Numeric FEATURE: ", nf)
+         # Get New Feature Splits
+        t_X_tr, t_Y_tr, t_X_te, t_Y_te = utils.configure_numeric_feature(features_list[nf], target_list, train_split, take_log)
+        # Combine Feature Splits With Existing
+        X_tr, Y_tr, X_te, Y_te = utils.combine_features(X_tr, Y_tr, X_te, Y_te,  t_X_tr, t_Y_tr, t_X_te, t_Y_te )
+
+
+    # print("FINAL")
+    # print("X train counts shape: ", X_tr.shape)
+    # print("Y train counts shape: ", Y_tr.shape)
+    #
+    # print("X test counts shape: ", X_te.shape)
+    # print("Y test counts shape: ", Y_te.shape)
+
+
+    return X_tr, Y_tr, X_te, Y_te
+
+
 ################################################################################
 # Plots ########################################################################
 ################################################################################
@@ -563,7 +624,7 @@ def regression_single_text(title, feature_index, train_split=.75):
     regr = lm.LinearRegression().fit(X_train_counts,np.array(y_train).astype(np.float))
     print(regr.score(X_test_counts,np.array(y_test).astype(np.float)))
 
-def lasso_single_numeric(title, feature_index, train_split, take_log=False):
+def lasso_single_numeric(title, feature_index, train_split, take_log=False, show_plot=False):
     """
     Lasso With CV on single numeric Feature
 
@@ -617,15 +678,16 @@ def lasso_single_numeric(title, feature_index, train_split, take_log=False):
     print (pd.Series(np.r_[lasso_fit.intercept_, lasso_fit.coef_]))
     print("Lasso Path: ", lasso_path)
 
-    # print()
-    # # Plot the average MSE across folds
-    # plt.plot(-np.log(lasso_fit.alphas_),
-    # np.sqrt(lasso_fit.mse_path_).mean(axis = 1))
-    # plt.ylabel('RMSE (avg. across folds)')
-    # plt.xlabel("-log(lambda)")
-    # # Indicate the lasso parameter that minimizes the average MSE across
-    # plt.axvline(-np.log(lasso_fit.alpha_), color = 'red')
-    # plt.show()
+    if show_plot:
+        print()
+        # Plot the average MSE across folds
+        plt.plot(-np.log(lasso_fit.alphas_),
+        np.sqrt(lasso_fit.mse_path_).mean(axis = 1))
+        plt.ylabel('RMSE (avg. across folds)')
+        plt.xlabel("-log(lambda)")
+        # Indicate the lasso parameter that minimizes the average MSE across
+        plt.axvline(-np.log(lasso_fit.alpha_), color = 'red')
+        plt.show()
 
 def lasso_single_text(title, feature_index, train_split):
     """
@@ -917,11 +979,273 @@ def elastic_single_text(title, feature_index, train_split):
     # plt.axvline(-np.log(lr_fit.alpha_), color = 'red')
     # plt.show()
 
+def regression_numeric_text(title, numeric_index, text_index, train_split, take_log, show_plot):
+    """
+    Regression With Numeric & Text Features
+
+    Numeric Index: Index of Numeric Feature
+    Text Index: Index of Text Feature
+
+    """
+    print("\n---------- Multiple Features Numeric Regression --------")
+    print("--------", title, "---------\n")
+
+    features_list = utils.get_feature_lists()
+    target_list = features_list[5]
+
+    # Set Numeric & Text Features
+    numeric_list = features_list[numeric_index]
+    text_list = features_list[text_index]
+
+
+    # Split Numeric & Text Features - Random State the Same: Assuming values will be shuffled the same
+    X_train_n, X_test_n, Y_train_n, Y_test_n = train_test_split(numeric_list,target_list, train_size=train_split, random_state=19)
+    X_train_t, X_test_t, Y_train_t, Y_test_t = train_test_split(text_list,target_list, train_size=train_split, random_state=19)
+
+
+    # Convert To Numpy Array Numeric
+    X_train_n = np.array(X_train_n).astype(np.float)
+    Y_train_n = np.array(Y_train_n).astype(np.float)
+    X_test_n = np.array(X_test_n).astype(np.float)
+    Y_test_n = np.array(Y_test_n).astype(np.float)
+
+    # Assert Shape of Numeric
+    if len(X_train_n.shape) != 2:
+        X_train_n = np.array(X_train_n[:,np.newaxis])
+    if len(X_test_n.shape) != 2:
+        X_test_n = np.array(X_test_n[:,np.newaxis])
+    if len(Y_train_n.shape) != 2:
+        Y_train_n = np.array(Y_train_n[:,np.newaxis])
+    if len(Y_test_n.shape) != 2:
+        Y_test_n = np.array(Y_test_n[:,np.newaxis])
+    assert (len(X_train_n.shape) == 2)
+    assert (len(X_test_n.shape) == 2)
+    assert (len(Y_train_n.shape) == 2)
+    assert (len(Y_test_n.shape) == 2)
+
+    # Take Log Of Values
+    if take_log:
+        X_train_n = np.log10(X_train_n)
+        Y_train_n = np.log10(Y_train_n)
+        X_test_n = np.log10(X_test_n)
+        Y_test_n = np.log10(Y_test_n)
+
+
+    # Convert Text To Numpy Array
+    Y_train_t = np.array(Y_train_t).astype(np.float)
+    Y_test_t = np.array(Y_test_t).astype(np.float)
+
+    # Convert Text Feature to Vectorized Features
+    cv = CountVectorizer()
+    X_train_counts = cv.fit_transform(X_train_t)
+    X_test_counts = cv.transform(X_test_t)
+
+
+    # Combine Features after Vectorization
+    # Combine X_train
+    print("X train counts shape: ", X_train_counts.toarray().shape)
+    print("X train numeric shape: ", X_train_n.shape)
+    X_train = np.hstack((X_train_counts.toarray(), X_train_n))
+    print("X train shape: ", X_train.shape)
+
+    # Combine X_test
+    print("X test counts shape: ", X_test_counts.shape)
+    print("X test numeric shape: ", X_test_n.shape)
+    X_test = np.hstack((X_test_counts.toarray(), X_test_n))
+    print("X test shape: ", X_test.shape)
+
+
+    lr = lm.ElasticNetCV(cv = 3, normalize=True)
+    lr_fit = lr.fit(X_train,Y_train_n)
+    lr_path = lr.score(X_test,Y_test_n)
+
+    print()
+    #print ('Deg. Coefficient')
+    #print (pd.Series(np.r_[ridge_fit.intercept_, ridge_fit.coef_]))
+    print("Elastic Path: ", lr_path)
+
+    print()
+    # Plot the average MSE across folds
+    plt.plot(-np.log(lr_fit.alphas_),
+    np.sqrt(lr_fit.mse_path_).mean(axis = 1))
+    plt.ylabel('RMSE (avg. across folds)')
+    plt.xlabel("-log(lambda)")
+    # Indicate the lasso parameter that minimizes the average MSE across
+    plt.axvline(-np.log(lr_fit.alpha_), color = 'red')
+    plt.show()
+
+def multi_simple_regression(title, X_tr, Y_tr, X_te, Y_te, show_plot):
+    """
+    Simple Linear Regression Model Using SciKit Learn Module
+
+    Parameters
+    ----------
+    X_tr: Train Features
+    Y_tr: Train Target Values
+    X_te: Test Features
+    Y_te: Train Target Values
+    show_plot: Boolean Show Plot
+    title: title of
+
+    Returns
+    -------
+    Nothing Currently
+
+    Examples
+    --------
+
+    """
+
+    print("\n---------- Single Feature Numeric Regression --------")
+    print("--------", title, "---------\n")
+
+    # Train the Model
+    lr = lm.LinearRegression().fit(X_tr,Y_tr)
+
+    # Score the Model
+    print("Test Score: ", lr.score(X_te,Y_te))
+
+def multi_lasso(title, X_tr, Y_tr, X_te, Y_te, show_plot):
+    """
+    Simple Linear Regression Model Using SciKit Learn Module
+
+    Parameters
+    ----------
+    X_tr: Train Features
+    Y_tr: Train Target Values
+    X_te: Test Features
+    Y_te: Train Target Values
+    show_plot: Boolean Show Plot
+    title: title of
+
+    Returns
+    -------
+    Nothing Currently
+
+    Examples
+    --------
+
+    """
+    print("\n---------- Single Feature Numeric Regression --------")
+    print("--------", title, "---------\n")
+
+    # Train the Model
+    lasso_model = lm.LassoCV(cv = 15, copy_X = True, normalize=True)
+    lasso_fit = lasso_model.fit(X_tr,Y_tr)
+    lasso_path = lasso_model.score(X_te,Y_te)
+
+    print()
+    print ('Deg. Coefficient')
+    print (pd.Series(np.r_[lasso_fit.intercept_, lasso_fit.coef_]))
+    print("Lasso Score: ", lasso_path)
+
+    # print("Alphas Shape: ", lasso_fit.alphas_.shape )
+    # print("MSE PATH Shape: ", lasso_fit.mse_path_.shape)
+    #
+    #print("Alphas Log: ", lasso_fit.alphas_ )
+    #print("MSE PATH Log: ", np.log10(lasso_fit.mse_path_))
+
+    # for x in lasso_fit.alphas_:
+    #     print(x, " ", np.log(x), " ", -np.log(x))
+
+    # if show_plot:
+    #     print()
+    #     # Plot the average MSE across folds
+    #     plt.title("Lasso Regression CV W/ Normalization - Budget & Genre")
+    #     plt.plot(-np.log(lasso_fit.alphas_),
+    #     np.sqrt(lasso_fit.mse_path_).mean(axis = 1))
+    #     plt.ylabel('RMSE (average across folds)')
+    #     plt.xlabel("-log(lambda)")
+    #     # Indicate the lasso parameter that minimizes the average MSE across
+    #     plt.axvline(-np.log(lasso_fit.alpha_), color = 'red')
+    #     plt.show()
+    #
+    #     print()
+    #     # Plot the average MSE across folds
+    #     plt.plot(-np.log(lasso_fit.alphas_),
+    #     np.log(lasso_fit.mse_path_).mean(axis = 1))
+    #     plt.ylabel('Log (avg. across folds)')
+    #     plt.xlabel("-log(lambda)")
+    #     # Indicate the lasso parameter that minimizes the average MSE across
+    #     plt.axvline(-np.log(lasso_fit.alpha_), color = 'red')
+    #     plt.show()
+
+
+def multi_ridge(title, X_tr, Y_tr, X_te, Y_te, show_plot):
+    """
+    Simple Linear Regression Model Using SciKit Learn Module
+
+    Parameters
+    ----------
+    X_tr: Train Features
+    Y_tr: Train Target Values
+    X_te: Test Features
+    Y_te: Train Target Values
+    show_plot: Boolean Show Plot
+    title: title of
+
+    Returns
+    -------
+    Nothing Currently
+
+    Examples
+    --------
+
+    """
+    print("\n---------- Single Feature Numeric Regression --------")
+    print("--------", title, "---------\n")
+
+    lr = lm.RidgeCV(cv = 15, normalize=True)
+    lr_fit = lr.fit(X_tr,Y_tr)
+    lr_path = lr.score(X_te,Y_te)
+
+    print()
+    print ('Deg. Coefficient')
+    print (lr_fit.coef_)
+    print("Ridge Score: ", lr_path)
+
+def multi_elastic(title, X_tr, Y_tr, X_te, Y_te, show_plot):
+    """
+    Simple Linear Regression Model Using SciKit Learn Module
+
+    Parameters
+    ----------
+    X_tr: Train Features
+    Y_tr: Train Target Values
+    X_te: Test Features
+    Y_te: Train Target Values
+    show_plot: Boolean Show Plot
+    title: title of
+
+    Returns
+    -------
+    Nothing Currently
+
+    Examples
+    --------
+
+    """
+    print("\n---------- Single Feature Numeric Regression --------")
+    print("--------", title, "---------\n")
+
+    # Train the Model
+    lr = lm.ElasticNetCV(cv = 3)
+    lr_fit = lr.fit(X_tr,Y_tr)
+    lr_path = lr.score(X_te,Y_te)
+
+    print()
+    #print ('Deg. Coefficient')
+    #print (pd.Series(np.r_[lr_fit.intercept_, lr_fit.coef_]))
+    print("Elastic Score: ", lr_path)
+
+
+
 ################################################################################
-# Classification Experiments ###################################################
+# Multi Regression Sub Controller ##############################################
 ################################################################################
 
 # None Currently
+
 
 ################################################################################
 # Controllers ##################################################################
@@ -962,6 +1286,12 @@ def simple_regression():
     """
     Simple Regression Models
 
+    Using a single feature: budget, keywords, overview, genre
+
+    Numeric Features: Result in single feature (x, 1)
+    Text Features: Result in Multiple features (x, 3500)
+
+
     Expand Regression Models to include more features.
         A list of features with indices:
         0: budget list
@@ -971,8 +1301,6 @@ def simple_regression():
         4: genre list
         5: revenue list
         6: inflated revenue list
-
-
 
     """
     # Call Experiments From Here
@@ -1005,18 +1333,18 @@ def simple_regression():
 
 
     # ## ---------- CV Lasso Regression: Single Numeric  ---------
-    #
+    # #
     # # Budget
-    # lasso_single_numeric("Lasso with CV Budget", 0, .80)
+    # lasso_single_numeric("Lasso with CV Budget No inflation", 0, .80, False, True)
     #
     # # Budget Inflation
-    # lasso_single_numeric("Lasso with CV Budget", 1, .80)
+    # lasso_single_numeric("Lasso with CV Budget inflation", 1, .80, False, True)
     #
     # # Budget Log Base 10
-    # lasso_single_numeric("Lasso with CV Budget", 0, .80, True)
+    # lasso_single_numeric("Lasso with CV Budget no inflation log 10", 0, .80, True, True)
     #
     # # Budget Inflation Log Base 10
-    # lasso_single_numeric("Lasso with CV Budget", 1, .80, True)
+    # lasso_single_numeric("Lasso with CV Budge inflation log 10t", 1, .80, True, True)
     #
     # ## ---------- CV Lasso Regression: Single Text  ------------
     #
@@ -1035,16 +1363,16 @@ def simple_regression():
     # ## ---------- CV Ridge Regression: Single Numeric ----------
     #
     # # Budget
-    # ridge_single_numeric("Lasso with CV Budget", 0, .80)
+    # ridge_single_numeric("Lasso with CV Budget", 0, .80, False, True)
     #
     # # Budget Inflation
-    # ridge_single_numeric("Lasso with CV Budget", 1, .80)
+    # ridge_single_numeric("Lasso with CV Budget", 1, .80, False, True )
     #
     # # Budget Log Base 10
-    # ridge_single_numeric("Lasso with CV Budget", 0, .80, True)
+    # ridge_single_numeric("Lasso with CV Budget", 0, .80, True, True)
     #
     # # Budget Inflation Log Base 10
-    # ridge_single_numeric("Lasso with CV Budget", 1, .80, True)
+    # ridge_single_numeric("Lasso with CV Budget", 1, .80, True, True)
 
     ## ---------- CV Ridge Regression: Single Text -------------
 
@@ -1087,6 +1415,59 @@ def simple_regression():
     # # Genre
     # elastic_single_text("Elastic with Genre", 4, .80)
 
+def multi_regression():
+    """
+    Combining Multiple Regression Models
+
+    Combining Multiple: budget, keywords, overview, genre
+
+    Numeric Features: Result in single feature (x, 1)
+    Text Features: Result in Multiple features (x, 3500)
+
+
+    Expand Regression Models to include more features.
+        A list of features with indices:
+        0: budget list
+        1: inflated budget list
+        2: keyword list
+        3: overview list
+        4: genre list
+        5: revenue list
+        6: inflated revenue list
+        7: keywords without stopwords
+        8: overview without stopwords
+
+    """
+
+    # Call Experiments From Here
+
+    ## ---------- Linear Regression: Two Features ---------------
+
+    #regression_numeric_text("Budget not inflated & keywords", 0, 2, .8, False, False)
+
+
+
+    ## ---------- Combine Multiple Features ---------------
+
+    # Create Data Set From Specified Features
+    #X_tr, Y_tr, X_te, Y_te = build_from_numeric_text([0], [4], .8, False)
+
+    ## ---------- Linear Regression: Multiple Features ---------------
+
+    #multi_simple_regression("Linear Regression", X_tr, Y_tr, X_te, Y_te, False)
+
+    ## ---------- CV Lasso Regression: Multiple Features -------------
+
+    #multi_lasso("Lasso Regression", X_tr, Y_tr, X_te, Y_te, True)
+
+    ## ---------- CV Ridge Regression: Multiple Features -------------
+
+    #multi_ridge("Ridge Regression", X_tr, Y_tr, X_te, Y_te, False)
+
+    ## ---------- CV Elastic Regression: Multiple Features -----------
+
+    #multi_elastic("Elastic Regression", X_tr, Y_tr, X_te, Y_te, False)
+
 
 ################################################################################
 # Main #########################################################################
@@ -1100,8 +1481,13 @@ if __name__ == '__main__':
     # Establish Baseline with single feature budget
     #single_class_regression()
 
-    # Using single numeric & text features
-    simple_regression()
+    # Using single numeric or text features
+    #simple_regression()
+
+    # Combining numeric & text features
+    multi_regression()
+
+    print()
 
 
 
