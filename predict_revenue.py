@@ -14,6 +14,21 @@ from sklearn.feature_extraction.text import CountVectorizer
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.cross_validation import train_test_split
+from sklearn.metrics import explained_variance_score
+from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import median_absolute_error
+from sklearn.metrics import r2_score
+
+from sklearn.cross_validation import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import roc_auc_score
+from sklearn.pipeline import Pipeline
+from sklearn.svm import OneClassSVM
+
+
+# Magic Sauce
+import xgboost as xgb
 
 ################################################################################
 # Data Setup ###################################################################
@@ -1170,7 +1185,6 @@ def multi_lasso(title, X_tr, Y_tr, X_te, Y_te, show_plot):
     #     plt.axvline(-np.log(lasso_fit.alpha_), color = 'red')
     #     plt.show()
 
-
 def multi_ridge(title, X_tr, Y_tr, X_te, Y_te, show_plot):
     """
     Simple Linear Regression Model Using SciKit Learn Module
@@ -1237,6 +1251,197 @@ def multi_elastic(title, X_tr, Y_tr, X_te, Y_te, show_plot):
     #print ('Deg. Coefficient')
     #print (pd.Series(np.r_[lr_fit.intercept_, lr_fit.coef_]))
     print("Elastic Score: ", lr_path)
+
+################################################################################
+# XGBoost Regression  ##########################################################
+################################################################################
+
+def xgBoost_1(title, X_fit, y_fit, X_eval, y_eval, show_plot):
+    """
+    Extreme Gradient Boosting Module - Regression
+
+    Parameters
+    ----------
+    X_tr: Train Features
+    Y_tr: Train Target Values
+    X_te: Test Features
+    Y_te: Train Target Values
+    show_plot: Boolean Show Plot
+    title: title of
+
+    Returns
+    -------
+    Nothing Currently
+
+    Examples
+    --------
+
+    """
+    print("\n---------- Gradient Boosting - Regression --------")
+    print("--------", title, "---------\n")
+
+    # Train Model
+
+    depth = 10
+    estimator = 100
+    l_rate = 0.01
+    sub_sample = 0.94
+    col_sample = 0.40
+    seed_val = 4242
+    # n_round = 2
+    # verbose_val = 2
+    alpha_val = 0.5
+    #lambda_val = 1.0
+
+    # classifier XBG Regression
+    # clf = xgb.XGBRegressor(missing=np.nan, max_depth=depth, n_estimators=estimator,
+    #                        learning_rate=l_rate, nthread=4, subsample=sub_sample, colsample_bytree=col_sample,
+    #                        seed=seed_val, reg_alpha = alpha_val)
+
+    clf = xgb.XGBRegressor(missing=np.nan, max_depth=depth, n_estimators=estimator,
+                       learning_rate=l_rate, nthread=4,
+                       seed=seed_val, reg_alpha = alpha_val)
+
+
+    # fitting
+    clf.fit(X_fit, y_fit, early_stopping_rounds=20, eval_metric="rmse", eval_set=[(X_eval, y_eval)])
+
+
+    print()
+    print()
+    print("Data: ", title)
+    # Print Parameters
+    print("Parameters")
+    print()
+    print("Depth: ", depth)
+    print("estimator: ", estimator)
+    print("l_rate: ", l_rate)
+    print("sub_sample: ", sub_sample)
+    print("col_sample: ", col_sample)
+    print("seed: ", seed_val)
+    print("Alpha: ", alpha_val)
+    #print("Lambda: ", lambda_val)
+    # print("Num Rounds: ", n_round)
+    # print("Verbose Val: ", verbose_val)
+    print()
+    print()
+
+
+    # Score On Train Split
+    split_train_pred = clf.predict(X_fit)
+    print(" -- Scores -- Train Split -- ")
+    print("Explained Variance Score: ", explained_variance_score(y_fit, split_train_pred ))
+    print("Mean Absolute Error: ", mean_absolute_error(y_fit, split_train_pred))
+    print("Mean Squared Error: ", mean_squared_error(y_fit, split_train_pred))
+    print("Median Absolute Error: ", median_absolute_error(y_fit, split_train_pred))
+    print("R2 Score: ", r2_score(y_fit, split_train_pred))
+    print()
+    print()
+
+    # Score On Test Split
+    split_test_pred = clf.predict(X_eval)
+    print(" -- Scores -- Test Split -- ")
+    print("Explained Variance Score: ", explained_variance_score(y_eval, split_test_pred ))
+    print("Mean Absolute Error: ", mean_absolute_error(y_eval, split_test_pred))
+    print("Mean Squared Error: ", mean_squared_error(y_eval, split_test_pred))
+    print("Median Absolute Error: ", median_absolute_error(y_eval, split_test_pred))
+    print("R2 Score: ", r2_score(y_eval, split_test_pred))
+    print()
+
+def xgBoost_2(title, X_fit, y_fit, X_eval, y_eval, show_plot):
+    """
+    Extreme Gradient Boosting Module - Regression
+
+    Using Dict To Store Error Values
+
+    Parameters
+    ----------
+    X_tr: Train Features
+    Y_tr: Train Target Values
+    X_te: Test Features
+    Y_te: Train Target Values
+    show_plot: Boolean Show Plot
+    title: title of
+
+    Returns
+    -------
+    Nothing Currently
+
+    Examples
+    --------
+
+    """
+    print("\n---------- Gradient Boosting - Regression --------")
+    print("--------", title, "---------\n")
+
+    # Train Model
+
+    depth = 10
+    estimator = 1000
+    l_rate = 0.01
+    sub_sample = 0.94
+    col_sample = 0.40
+    seed_val = 4242
+    # n_round = 2
+    # verbose_val = 2
+    alpha_val = 0.5
+    #lambda_val = 1.0
+
+    # classifier XBG Regression
+    # clf = xgb.XGBRegressor(missing=np.nan, max_depth=depth, n_estimators=estimator,
+    #                        learning_rate=l_rate, nthread=4, subsample=sub_sample, colsample_bytree=col_sample,
+    #                        seed=seed_val, reg_alpha = alpha_val)
+
+    clf = xgb.XGBRegressor(missing=np.nan, max_depth=depth, n_estimators=estimator,
+                       learning_rate=l_rate, nthread=4,
+                       seed=seed_val, reg_alpha = alpha_val)
+
+
+    # fitting
+    # !! I Changed the fit paremeters to (X_fit, y_fit, )
+    clf.fit(X_fit, y_fit, early_stopping_rounds=20, eval_metric="rmse", eval_set=[(X_eval, y_eval)])
+
+
+    print()
+    print()
+    print("Data: ", title)
+    # Print Parameters
+    print("Parameters")
+    print()
+    print("Depth: ", depth)
+    print("estimator: ", estimator)
+    print("l_rate: ", l_rate)
+    print("sub_sample: ", sub_sample)
+    print("col_sample: ", col_sample)
+    print("seed: ", seed_val)
+    print("Alpha: ", alpha_val)
+    #print("Lambda: ", lambda_val)
+    # print("Num Rounds: ", n_round)
+    # print("Verbose Val: ", verbose_val)
+    print()
+    print()
+
+
+    # Score On Train Split
+    split_train_pred = clf.predict(X_fit)
+    print(" -- Scores -- Train Split -- ")
+    print("Explained Variance Score: ", explained_variance_score(y_fit, split_train_pred ))
+    print("Mean Absolute Error: ", mean_absolute_error(y_fit, split_train_pred))
+    print("Mean Squared Error: ", mean_squared_error(y_fit, split_train_pred))
+    print("Median Absolute Error: ", median_absolute_error(y_fit, split_train_pred))
+    print("R2 Score: ", r2_score(y_fit, split_train_pred))
+    print()
+    print()
+
+    # Score On Test Split
+    split_test_pred = clf.predict(X_eval)
+    print(" -- Scores -- Test Split -- ")
+    print("Explained Variance Score: ", explained_variance_score(y_eval, split_test_pred ))
+    print("Mean Absolute Error: ", mean_absolute_error(y_eval, split_test_pred))
+    print("Mean Squared Error: ", mean_squared_error(y_eval, split_test_pred))
+    print("Median Absolute Error: ", median_absolute_error(y_eval, split_test_pred))
+    print("R2 Score: ", r2_score(y_eval, split_test_pred))
+    print()
 
 
 
@@ -1468,6 +1673,36 @@ def multi_regression():
 
     #multi_elastic("Elastic Regression", X_tr, Y_tr, X_te, Y_te, False)
 
+def boosted_trees():
+    """
+    Combining Multiple Regression Models
+
+    Combining Multiple: budget, keywords, overview, genre
+
+    Numeric Features: Result in single feature (x, 1)
+    Text Features: Result in Multiple features (x, 3500)
+
+
+    Expand Regression Models to include more features.
+        A list of features with indices:
+        0: budget list
+        1: inflated budget list
+        2: keyword list
+        3: overview list
+        4: genre list
+        5: revenue list
+        6: inflated revenue list
+        7: keywords without stopwords
+        8: overview without stopwords
+
+    """
+    # Create Data Set From Specified Features
+    X_tr, Y_tr, X_te, Y_te = build_from_numeric_text([0, 1], [2, 3, 4], .8, False)
+
+
+    ## ---------- xgBoost Regression: Multiple Features -----------
+    xgBoost_1("[0], [2, 3, 4], .8", X_tr, Y_tr, X_te, Y_te, False)
+
 
 ################################################################################
 # Main #########################################################################
@@ -1485,7 +1720,9 @@ if __name__ == '__main__':
     #simple_regression()
 
     # Combining numeric & text features
-    multi_regression()
+    #multi_regression()
+
+    boosted_trees()
 
     print()
 

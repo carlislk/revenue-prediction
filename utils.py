@@ -17,8 +17,6 @@ import mltools as ml
 from sklearn.cross_validation import train_test_split
 from sklearn.feature_extraction.text import CountVectorizer
 
-
-
 ################################################################################
 # General Utilities ############################################################
 ################################################################################
