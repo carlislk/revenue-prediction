@@ -1,0 +1,124 @@
+Data:  [0], [2, 3, 4], .8
+Parameters
+
+Depth:  [7, 10, 15]
+estimator:  [100]
+l_rate:  [0.05]
+sub_sample:  []
+col_sample:  []
+seed:  [2314]
+Alpha:  [1.0]
+Min Child Weight:  []
+Num Thread:  [-1]
+
+
+Grid: 
+{'seed': 2314, 'n_estimators': 100, 'learning_rate': 0.05, 'reg_alpha': 1.0, 'nthread': -1, 'max_depth': 7}
+end grid
+ -- Scores -- Train Split -- 
+Explained Variance Score:  0.878561362136
+Mean Absolute Error:  53334902.7649
+Mean Squared Error:  4.99380739127e+15
+Median Absolute Error:  40388367.5
+R2 Score:  0.878496328158
+
+
+ -- Scores -- Test Split -- 
+Explained Variance Score:  0.559000586442
+Mean Absolute Error:  81491226.4424
+Mean Squared Error:  1.73196040777e+16
+Median Absolute Error:  54504833.0
+R2 Score:  0.557608167536
+
+
+Data:  [0], [2, 3, 4], .8
+Parameters
+
+Depth:  7
+estimator:  100
+l_rate:  0.05
+sub_sample:  -1
+col_sample:  -1
+seed:  4242
+Alpha:  1.0
+
+
+[99]	validation_0-rmse:131603968.000000
+ -- Scores -- Train Split -- 
+Explained Variance Score:  0.878561362136
+Mean Absolute Error:  53334902.7649
+Mean Squared Error:  4.99380739127e+15
+Median Absolute Error:  40388367.5
+R2 Score:  0.878496328158
+
+
+ -- Scores -- Test Split -- 
+Explained Variance Score:  0.559000586442
+Mean Absolute Error:  81491226.4424
+Mean Squared Error:  1.73196040777e+16
+Median Absolute Error:  54504833.0
+R2 Score:  0.557608167536
+
+
+
+
+Data:  [0], [2, 3, 4], .8
+Parameters
+
+Depth:  10
+estimator:  100
+l_rate:  0.05
+sub_sample:  -1
+col_sample:  -1
+seed:  4242
+Alpha:  1.0
+
+
+ -- Scores -- Train Split -- 
+Explained Variance Score:  0.93655115675
+Mean Absolute Error:  39597127.2644
+Mean Squared Error:  2.6111127193e+15
+Median Absolute Error:  31516823.5
+R2 Score:  0.936469359322
+
+
+ -- Scores -- Test Split -- 
+Explained Variance Score:  0.549837817518
+Mean Absolute Error:  81684732.2848
+Mean Squared Error:  1.76471087772e+16
+Median Absolute Error:  51199103.0
+R2 Score:  0.549242768216
+
+
+Data:  [0], [2, 3, 4], .8
+Parameters
+
+Depth:  15
+estimator:  100
+l_rate:  0.05
+sub_sample:  -1
+col_sample:  -1
+seed:  4242
+Alpha:  1.0
+
+
+[99]	validation_0-rmse:139957504.000000
+ -- Scores -- Train Split -- 
+Explained Variance Score:  0.972962645108
+Mean Absolute Error:  25611991.0521
+Mean Squared Error:  1.11527732458e+15
+Median Absolute Error:  20321684.5
+R2 Score:  0.972864333876
+
+
+ -- Scores -- Test Split -- 
+Explained Variance Score:  0.499756756049
+Mean Absolute Error:  84347443.9859
+Mean Squared Error:  1.95881009928e+16
+Median Absolute Error:  51013680.0
+R2 Score:  0.499664319471
+
+
+
+
+

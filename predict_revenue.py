@@ -25,7 +25,13 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import roc_auc_score
 from sklearn.pipeline import Pipeline
 from sklearn.svm import OneClassSVM
-
+from sklearn.cross_validation import StratifiedKFold
+from sklearn.cross_validation import KFold
+from sklearn.cross_validation import StratifiedShuffleSplit
+from sklearn.cross_validation import cross_val_score
+from sklearn.cross_validation import cross_val_predict
+from sklearn.grid_search import GridSearchCV
+import csv
 
 # Magic Sauce
 import xgboost as xgb
@@ -1282,25 +1288,27 @@ def xgBoost_1(title, X_fit, y_fit, X_eval, y_eval, show_plot):
 
     # Train Model
 
-    depth = 10
+    depth = 15
     estimator = 100
-    l_rate = 0.01
-    sub_sample = 0.94
-    col_sample = 0.40
+    l_rate = 0.05
+    sub_sample = -1
+    col_sample = -1
     seed_val = 4242
-    # n_round = 2
-    # verbose_val = 2
-    alpha_val = 0.5
+    alpha_val = 1.0
     #lambda_val = 1.0
+    #subsample=sub_sample
+    #  colsample_bytree=col_sample
 
-    # classifier XBG Regression
-    # clf = xgb.XGBRegressor(missing=np.nan, max_depth=depth, n_estimators=estimator,
-    #                        learning_rate=l_rate, nthread=4, subsample=sub_sample, colsample_bytree=col_sample,
-    #                        seed=seed_val, reg_alpha = alpha_val)
-
-    clf = xgb.XGBRegressor(missing=np.nan, max_depth=depth, n_estimators=estimator,
-                       learning_rate=l_rate, nthread=4,
-                       seed=seed_val, reg_alpha = alpha_val)
+    # Learner
+    clf = xgb.XGBRegressor(
+        missing=np.nan,
+        max_depth=depth,
+        n_estimators=estimator,
+        learning_rate=l_rate,
+        nthread=-1,
+        seed=seed_val,
+        reg_alpha = alpha_val
+    )
 
 
     # fitting
@@ -1352,7 +1360,92 @@ def xgBoost_2(title, X_fit, y_fit, X_eval, y_eval, show_plot):
     """
     Extreme Gradient Boosting Module - Regression
 
-    Using Dict To Store Error Values
+    Parameters
+    ----------
+    X_tr: Train Features
+    Y_tr: Train Target Values
+    X_te: Test Features
+    Y_te: Train Target Values
+    show_plot: Boolean Show Plot
+    title: title of
+
+    Returns
+    -------
+    Nothing Currently
+
+    Examples
+    --------
+
+    """
+    print("\n---------- Gradient Boosting - Regression --------")
+    print("--------", title, "---------\n")
+
+    # Iterate Over Single Parameter Value
+
+
+    results = []
+
+    vals = [0.01, 0.03, 0.05, 0.07, 0.09, 0.11]
+
+    for i, l_rate in enumerate(vals):
+
+        depth = 6
+        estimator = 300
+        #l_rate = 0.05
+        sub_sample = -1
+        col_sample = -1
+        seed_val = 4242
+        #alpha_val = 1.0
+        #lambda_val = 1.0
+        #subsample=sub_sample
+        #colsample_bytree=col_sample
+
+        # Learner
+        clf = xgb.XGBRegressor(
+            missing=np.nan,
+            max_depth=depth,
+            n_estimators=estimator,
+            learning_rate=l_rate,
+            nthread=-1,
+            seed=seed_val,
+            #reg_alpha = alpha_val,
+            #min_child_weight= minChild,
+        )
+
+
+        # fitting
+        clf.fit(X_fit, y_fit, early_stopping_rounds=20, eval_metric="rmse", eval_set=[(X_eval, y_eval)])
+
+        # Scoring
+        # Score On Train Split
+        split_train_pred = clf.predict(X_fit)
+        r2_train =  r2_score(y_fit, split_train_pred)
+
+        # Score On Test Split
+        split_test_pred = clf.predict(X_eval)
+        r2_test = r2_score(y_eval, split_test_pred)
+
+        # Save to Results
+        results.append((i, l_rate, r2_train, r2_test))
+
+
+
+    print("Predict - Done")
+
+    # Write To File
+    write_file = open('pred_on_LearnRate_depth-6_lrate-.05_est-300_.csv', 'w')
+    write_file.write('ID,Depth,r2_train,r2_test\n')
+    for i,j,r1,r2 in results:
+        write_file.write('{},{},{},{} \n'.format(i+1, j, r1, r2))
+        print(i, j, r1, r2)
+    write_file.close()
+
+    print()
+    print("Write To File - Done")
+
+def xgBoost_3(title, X_fit, y_fit, X_eval, y_eval, show_plot):
+    """
+    Extreme Gradient Boosting Module - Regression
 
     Parameters
     ----------
@@ -1374,32 +1467,117 @@ def xgBoost_2(title, X_fit, y_fit, X_eval, y_eval, show_plot):
     print("\n---------- Gradient Boosting - Regression --------")
     print("--------", title, "---------\n")
 
-    # Train Model
+    results = []
 
-    depth = 10
-    estimator = 1000
-    l_rate = 0.01
-    sub_sample = 0.94
-    col_sample = 0.40
+    depth = 6
+    estimator = 300
+    l_rate = 0.05
+    sub_sample = -1
+    col_sample = -1
     seed_val = 4242
-    # n_round = 2
-    # verbose_val = 2
-    alpha_val = 0.5
+    #alpha_val = 1.0
     #lambda_val = 1.0
+    #subsample=sub_sample
+    #colsample_bytree=col_sample
 
-    # classifier XBG Regression
-    # clf = xgb.XGBRegressor(missing=np.nan, max_depth=depth, n_estimators=estimator,
-    #                        learning_rate=l_rate, nthread=4, subsample=sub_sample, colsample_bytree=col_sample,
-    #                        seed=seed_val, reg_alpha = alpha_val)
-
-    clf = xgb.XGBRegressor(missing=np.nan, max_depth=depth, n_estimators=estimator,
-                       learning_rate=l_rate, nthread=4,
-                       seed=seed_val, reg_alpha = alpha_val)
+    # Learner
+    clf = xgb.XGBRegressor(
+        missing=np.nan,
+        max_depth=depth,
+        n_estimators=estimator,
+        learning_rate=l_rate,
+        nthread=-1,
+        seed=seed_val,
+    )
 
 
     # fitting
-    # !! I Changed the fit paremeters to (X_fit, y_fit, )
     clf.fit(X_fit, y_fit, early_stopping_rounds=20, eval_metric="rmse", eval_set=[(X_eval, y_eval)])
+
+    # Scoring
+    # Score On Train Split
+    split_train_pred = clf.predict(X_fit)
+    r2_train =  r2_score(y_fit, split_train_pred)
+
+    # Score On Test Split
+    split_test_pred = clf.predict(X_eval)
+    r2_test = r2_score(y_eval, split_test_pred)
+
+    # Save to Results
+    results.append((title, depth, estimator, l_rate,  r2_train, r2_test))
+
+
+
+    print("Predict - Done")
+
+    # Write To File
+    write_file = open('err_rates_1.csv', 'a')
+    #write_file.write('Title,Depth,Estimator,L_Rate,r2_train,r2_test\n')
+    for i,j, k, l, r1,r2 in results:
+        write_file.write('{},{},{},{},{},{} \n'.format(i, j, k, l, r1, r2))
+        print('{},{},{},{},{},{} \n'.format(i, j, k, l, r1, r2))
+    write_file.close()
+
+    print()
+    print("Write To File - Done")
+
+def xgBoost_GridSearch(title, X_fit, y_fit, X_eval, y_eval, show_plot):
+    """
+    Extreme Gradient Boosting Module - Regression
+
+    Using Grid Search
+
+    Parameters
+    ----------
+    X_tr: Train Features
+    Y_tr: Train Target Values
+    X_te: Test Features
+    Y_te: Train Target Values
+    show_plot: Boolean Show Plot
+    title: title of
+
+    Returns
+    -------
+    Nothing Currently
+
+    Examples
+    --------
+
+    """
+    print("\n---------- Gradient Boosting: Grid Search - Regression -----")
+    print("--------", title, "---------\n")
+
+    # Train Model
+
+    learning_rate =  [ 0.05 ]
+    n_estimators = [ 300 ]
+    max_depth = [ 6 ]
+    subsample = [ ]
+    colsample_bytree = []
+    reg_alpha = [ 1.0 ]
+    seed = [2314]
+    min_child_weight = [0, 3, 4, 5, 6, 7, 8, 10]
+    nthread = [-1]
+
+    # Grid Search
+    clf = xgb.XGBRegressor(silent=False)
+
+    # Set Parameters To Iterate Over
+    clf_params = {
+        'learning_rate' : learning_rate,
+        'n_estimators' : n_estimators,
+        'max_depth' : max_depth,
+        # 'subsample' : subsample,
+        # 'colsample_bytree' : colsample_bytree,
+        'reg_alpha' : reg_alpha,
+        'seed' : seed,
+        # 'min_child_weight' : min_child_weight,
+        'nthread' : nthread,
+    }
+
+    #cv = KFold(4)
+    grid = GridSearchCV(clf, clf_params, n_jobs=-1,  scoring='mean_squared_error', verbose=10 )
+    grid.fit(X_fit, y_fit)
 
 
     print()
@@ -1408,22 +1586,26 @@ def xgBoost_2(title, X_fit, y_fit, X_eval, y_eval, show_plot):
     # Print Parameters
     print("Parameters")
     print()
-    print("Depth: ", depth)
-    print("estimator: ", estimator)
-    print("l_rate: ", l_rate)
-    print("sub_sample: ", sub_sample)
-    print("col_sample: ", col_sample)
-    print("seed: ", seed_val)
-    print("Alpha: ", alpha_val)
+    print("Depth: ", max_depth)
+    print("estimator: ", n_estimators)
+    print("l_rate: ", learning_rate)
+    print("sub_sample: ", subsample)
+    print("col_sample: ", colsample_bytree)
+    print("seed: ", seed)
+    print("Alpha: ", reg_alpha)
+    print("Min Child Weight: ", min_child_weight)
+    print("Num Thread: ", nthread)
     #print("Lambda: ", lambda_val)
     # print("Num Rounds: ", n_round)
     # print("Verbose Val: ", verbose_val)
     print()
     print()
-
+    print("Grid: ")
+    print(grid.best_params_)
+    print("end grid")
 
     # Score On Train Split
-    split_train_pred = clf.predict(X_fit)
+    split_train_pred = grid.best_estimator_.predict(X_fit)
     print(" -- Scores -- Train Split -- ")
     print("Explained Variance Score: ", explained_variance_score(y_fit, split_train_pred ))
     print("Mean Absolute Error: ", mean_absolute_error(y_fit, split_train_pred))
@@ -1434,7 +1616,112 @@ def xgBoost_2(title, X_fit, y_fit, X_eval, y_eval, show_plot):
     print()
 
     # Score On Test Split
-    split_test_pred = clf.predict(X_eval)
+    split_test_pred = grid.best_estimator_.predict(X_eval)
+    print(" -- Scores -- Test Split -- ")
+    print("Explained Variance Score: ", explained_variance_score(y_eval, split_test_pred ))
+    print("Mean Absolute Error: ", mean_absolute_error(y_eval, split_test_pred))
+    print("Mean Squared Error: ", mean_squared_error(y_eval, split_test_pred))
+    print("Median Absolute Error: ", median_absolute_error(y_eval, split_test_pred))
+    print("R2 Score: ", r2_score(y_eval, split_test_pred))
+    print()
+
+
+def xgBoost_GridSearch_Rand(title, X_fit, y_fit, X_eval, y_eval, show_plot):
+    """
+    Extreme Gradient Boosting Module - Regression
+
+    Using Grid Search
+
+    Parameters
+    ----------
+    X_tr: Train Features
+    Y_tr: Train Target Values
+    X_te: Test Features
+    Y_te: Train Target Values
+    show_plot: Boolean Show Plot
+    title: title of
+
+    Returns
+    -------
+    Nothing Currently
+
+    Examples
+    --------
+
+    """
+    print("\n---------- Gradient Boosting: Grid Search Rand - Regression -----")
+    print("--------", title, "---------\n")
+
+    # Train Model
+
+    learning_rate =  [ 0.05 ]
+    n_estimators = [ 100 ]
+    max_depth = [ 7, 10, 15 ]
+    subsample = [ ]
+    colsample_bytree = []
+    reg_alpha = [ 1.0 ]
+    seed = [2314]
+    min_child_weight = []
+    nthread = [-1]
+
+    # Grid Search
+    clf = xgb.XGBRegressor(silent=False)
+
+    # Set Parameters To Iterate Over
+    clf_params = {
+        'learning_rate' : learning_rate,
+        'n_estimators' : n_estimators,
+        'max_depth' : max_depth,
+        # 'subsample' : subsample,
+        # 'colsample_bytree' : colsample_bytree,
+        'reg_alpha' : reg_alpha,
+        'seed' : seed,
+        # 'min_child_weight' : min_child_weight,
+        'nthread' : nthread,
+    }
+
+    #cv = KFold(4)
+    grid = GridSearchCV(clf, clf_params, n_jobs=-1,  scoring='mean_squared_error', verbose=10 )
+    grid.fit(X_fit, y_fit)
+
+
+    print()
+    print()
+    print("Data: ", title)
+    # Print Parameters
+    print("Parameters")
+    print()
+    print("Depth: ", max_depth)
+    print("estimator: ", n_estimators)
+    print("l_rate: ", learning_rate)
+    print("sub_sample: ", subsample)
+    print("col_sample: ", colsample_bytree)
+    print("seed: ", seed)
+    print("Alpha: ", reg_alpha)
+    print("Min Child Weight: ", min_child_weight)
+    print("Num Thread: ", nthread)
+    #print("Lambda: ", lambda_val)
+    # print("Num Rounds: ", n_round)
+    # print("Verbose Val: ", verbose_val)
+    print()
+    print()
+    print("Grid: ")
+    print(grid.best_params_)
+    print("end grid")
+
+    # Score On Train Split
+    split_train_pred = grid.best_estimator_.predict(X_fit)
+    print(" -- Scores -- Train Split -- ")
+    print("Explained Variance Score: ", explained_variance_score(y_fit, split_train_pred ))
+    print("Mean Absolute Error: ", mean_absolute_error(y_fit, split_train_pred))
+    print("Mean Squared Error: ", mean_squared_error(y_fit, split_train_pred))
+    print("Median Absolute Error: ", median_absolute_error(y_fit, split_train_pred))
+    print("R2 Score: ", r2_score(y_fit, split_train_pred))
+    print()
+    print()
+
+    # Score On Test Split
+    split_test_pred = grid.best_estimator_.predict(X_eval)
     print(" -- Scores -- Test Split -- ")
     print("Explained Variance Score: ", explained_variance_score(y_eval, split_test_pred ))
     print("Mean Absolute Error: ", mean_absolute_error(y_eval, split_test_pred))
@@ -1673,6 +1960,7 @@ def multi_regression():
 
     #multi_elastic("Elastic Regression", X_tr, Y_tr, X_te, Y_te, False)
 
+
 def boosted_trees():
     """
     Combining Multiple Regression Models
@@ -1700,8 +1988,73 @@ def boosted_trees():
     X_tr, Y_tr, X_te, Y_te = build_from_numeric_text([0, 1], [2, 3, 4], .8, False)
 
 
-    ## ---------- xgBoost Regression: Multiple Features -----------
-    xgBoost_1("[0], [2, 3, 4], .8", X_tr, Y_tr, X_te, Y_te, False)
+    ## ---------- xgBoost Regression: Multiple Features ---------------------
+    #xgBoost_1("[0], [2, 3, 4], .8", X_tr, Y_tr, X_te, Y_te, False)
+
+    ## ---------- xgBoost Regression w/Grid Search: Multiple Features -----------
+    #xgBoost_GridSearch("[0], [2, 3, 4], .8", X_tr, Y_tr, X_te, Y_te, False)
+
+    ## ---------- xgBoost Regression: Multiple Features ---------------------
+    xgBoost_2("[0], [2, 3, 4], .8", X_tr, Y_tr, X_te, Y_te, False)
+
+    ## ---------- xgBoost Regression: Multiple Features ---------------------
+    #xgBoost_3("[Features(0|1|2|3|4) Tr_Split(.8)]", X_tr, Y_tr, X_te, Y_te, False)
+
+
+    # X_tr, Y_tr, X_te, Y_te = build_from_numeric_text([0, 1], [2, 3, 4], .8, False)
+    # xgBoost_3("[Features(0|1|2|3|4) Tr_Split(.8)]", X_tr, Y_tr, X_te, Y_te, False)
+    #
+    # X_tr, Y_tr, X_te, Y_te = build_from_numeric_text([0], [2, 3, 4], .8, False)
+    # xgBoost_3("[Features(0|2|3|4) Tr_Split(.8)]", X_tr, Y_tr, X_te, Y_te, False)
+    #
+    # X_tr, Y_tr, X_te, Y_te = build_from_numeric_text([1], [2, 3, 4], .8, False)
+    # xgBoost_3("[Features(1|2|3|4) Tr_Split(.8)]", X_tr, Y_tr, X_te, Y_te, False)
+    #
+    # X_tr, Y_tr, X_te, Y_te = build_from_numeric_text([0 ], [2, 3], .8, False)
+    # xgBoost_3("[Features(0|2|3) Tr_Split(.8)]", X_tr, Y_tr, X_te, Y_te, False)
+    #
+    # X_tr, Y_tr, X_te, Y_te = build_from_numeric_text([0], [2, 4], .8, False)
+    # xgBoost_3("[Features(0|2|4) Tr_Split(.8)]", X_tr, Y_tr, X_te, Y_te, False)
+    #
+    # X_tr, Y_tr, X_te, Y_te = build_from_numeric_text([0], [3, 4], .8, False)
+    # xgBoost_3("[Features(0|3|4) Tr_Split(.8)]", X_tr, Y_tr, X_te, Y_te, False)
+    #
+    # X_tr, Y_tr, X_te, Y_te = build_from_numeric_text([0], [2], .8, False)
+    # xgBoost_3("[Features(0|2|) Tr_Split(.8)]", X_tr, Y_tr, X_te, Y_te, False)
+    #
+    # X_tr, Y_tr, X_te, Y_te = build_from_numeric_text([0], [3], .8, False)
+    # xgBoost_3("[Features(0|3) Tr_Split(.8)]", X_tr, Y_tr, X_te, Y_te, False)
+    #
+    # X_tr, Y_tr, X_te, Y_te = build_from_numeric_text([0], [4], .8, False)
+    # xgBoost_3("[Features(0|4) Tr_Split(.8)]", X_tr, Y_tr, X_te, Y_te, False)
+    #
+    # X_tr, Y_tr, X_te, Y_te = build_from_numeric_text([0, 1], [], .8, False)
+    # xgBoost_3("[Features(0|1) Tr_Split(.8)]", X_tr, Y_tr, X_te, Y_te, False)
+    #
+    # X_tr, Y_tr, X_te, Y_te = build_from_numeric_text([0], [], .8, False)
+    # xgBoost_3("[Features(0) Tr_Split(.8)]", X_tr, Y_tr, X_te, Y_te, False)
+    #
+    # X_tr, Y_tr, X_te, Y_te = build_from_numeric_text([1], [], .8, False)
+    # xgBoost_3("[Features(1) Tr_Split(.8)]", X_tr, Y_tr, X_te, Y_te, False)
+    #
+    # X_tr, Y_tr, X_te, Y_te = build_from_numeric_text([], [2, 3, 4], .8, False)
+    # xgBoost_3("[Features(2|3|4) Tr_Split(.8)]", X_tr, Y_tr, X_te, Y_te, False)
+    #
+    # X_tr, Y_tr, X_te, Y_te = build_from_numeric_text([], [2, 3], .8, False)
+    # xgBoost_3("[Features(2|3) Tr_Split(.8)]", X_tr, Y_tr, X_te, Y_te, False)
+    #
+    # X_tr, Y_tr, X_te, Y_te = build_from_numeric_text([], [2, 4], .8, False)
+    # xgBoost_3("[Features(2|4) Tr_Split(.8)]", X_tr, Y_tr, X_te, Y_te, False)
+    #
+    # X_tr, Y_tr, X_te, Y_te = build_from_numeric_text([], [2], .8, False)
+    # xgBoost_3("[Features(2) Tr_Split(.8)]", X_tr, Y_tr, X_te, Y_te, False)
+    #
+    # X_tr, Y_tr, X_te, Y_te = build_from_numeric_text([], [3], .8, False)
+    # xgBoost_3("[Features(3) Tr_Split(.8)]", X_tr, Y_tr, X_te, Y_te, False)
+    #
+    # X_tr, Y_tr, X_te, Y_te = build_from_numeric_text([], [4], .8, False)
+    # xgBoost_3("[Features(4) Tr_Split(.8)]", X_tr, Y_tr, X_te, Y_te, False)
+
 
 
 ################################################################################
